@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单片机传感器实时监控系统</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        /* 标题样式 */
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+        }
+
+        /* 传感器卡片容器 */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto 30px;
+        }
+
+        /* 卡片样式 */
+        .sensor-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* 数值显示 */
+        .sensor-value {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            color: #ffdd59;
+        }
+
+        .sensor-unit {
+            text-align: center;
+            font-size: 14px;
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        /* 光敏状态标签 */
+        .status-tag {
+            display: block;
+            width: fit-content;
+            margin: 0 auto;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status-dark {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .status-normal {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .status-bright {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        /* 连接状态 */
+        .status-bar {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .connected {
+            color: #28a745;
+        }
+
+        .disconnected {
+            color: #dc3545;
+        }
+
+        /* 最后更新时间 */
+        .update-time {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #cccccc;
+        }
+
+        /* LCD模拟显示 */
+        .lcd-simulator {
+            max-width: 1000px;
+            margin: 30px auto;
+            background: #002b00;
+            padding: 25px;
+            border-radius: 15px;
+            border: 5px solid #333;
+            font-family: "Courier New", monospace;
+        }
+
+        .lcd-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #00ff00;
+        }
+
+        .lcd-content {
+            font-size: 22px;
+            color: #00ff00;
+            line-height: 1.8;
+            letter-spacing: 2px;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 24px;
+            }
+            .sensor-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <h1 class="page-title">📊 单片机传感器实时监控系统</h1>
+
+    <!-- LCD模拟显示 -->
+    <div class="lcd-simulator">
+        <div class="lcd-title">LCD1602 模拟显示</div>
+        <div class="lcd-content" id="lcd-content">
+            <div>ADJ: ----  NTC: ----</div>
+            <div>LIGHT: ----  STATUS: --</div>
+        </div>
+        <div class="update-time" id="update-time">最后更新：--:--:--</div>
+    </div>
+
+    <!-- 传感器卡片 -->
+    <div class="sensor-grid">
+        <!-- 可调电阻 -->
+        <div class="sensor-card">
+            <div class="card-header">
+                <span class="card-icon">🎛️</span>
+                <h2 class="card-title">可调电阻 (ADJ)</h2>
+            </div>
+            <div class="sensor-value" id="adj-value">0</div>
+            <div class="sensor-unit">8位AD值 (0-255)</div>
+        </div>
+
+        <!-- 热敏电阻 -->
+        <div class="sensor-card">
+            <div class="card-header">
+                <span class="card-icon">🌡️</span>
+                <h2 class="card-title">热敏电阻 (NTC)</h2>
+            </div>
+            <div class="sensor-value" id="ntc-value">0</div>
+            <div class="sensor-unit">8位AD值 (0-255)</div>
+        </div>
+
+        <!-- 光敏电阻 -->
+        <div class="sensor-card">
+            <div class="card-header">
+                <span class="card-icon">💡</span>
+                <h2 class="card-title">光敏电阻 (LIGHT)</h2>
+            </div>
+            <div class="sensor-value" id="light-value">0</div>
+            <div class="sensor-unit">8位AD值 (0-255)</div>
+            <span class="status-tag" id="light-status">等待数据</span>
+        </div>
+    </div>
+
+    <!-- 连接状态 -->
+    <div class="status-bar" id="connection-status">
+        🔄 正在连接到服务器...
+    </div>
+
+    <script>
+        // DOM元素
+        const adjValue = document.getElementById('adj-value');
+        const ntcValue = document.getElementById('ntc-value');
+        const lightValue = document.getElementById('light-value');
+        const lightStatus = document.getElementById('light-status');
+        const lcdContent = document.getElementById('lcd-content');
+        const updateTime = document.getElementById('update-time');
+        const connectionStatus = document.getElementById('connection-status');
+
+        // 连接SocketIO
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000
+        });
+
+        // 连接成功
+        socket.on('connect', () => {
+            connectionStatus.className = 'status-bar connected';
+            connectionStatus.textContent = '✅ 已连接到服务器，实时接收数据';
+        });
+
+        // 连接断开
+        socket.on('disconnect', () => {
+            connectionStatus.className = 'status-bar disconnected';
+            connectionStatus.textContent = '❌ 与服务器断开连接，请刷新页面';
+        });
+
+        // 接收传感器数据
+        socket.on('sensor_update', (data) => {
+            console.log('收到数据：', data);
+
+            // 更新数值
+            adjValue.textContent = data.adj_value;
+            ntcValue.textContent = data.ntc_value;
+            lightValue.textContent = data.light_value;
+
+            // 更新光敏状态
+            lightStatus.textContent = data.status;
+            lightStatus.className = 'status-tag';
+            switch (data.status.toLowerCase()) {
+                case 'dark':
+                    lightStatus.classList.add('status-dark');
+                    break;
+                case 'normal':
+                    lightStatus.classList.add('status-normal');
+                    break;
+                case 'bright':
+                    lightStatus.classList.add('status-bright');
+                    break;
+                default:
+                    lightStatus.style.background = '#dc3545';
+                    lightStatus.style.color = 'white';
+            }
+
+            // 更新LCD模拟显示
+            lcdContent.innerHTML = `
+                <div>ADJ: ${data.adj_value.toString().padStart(4, ' ')}  NTC: ${data.ntc_value.toString().padStart(4, ' ')}</div>
+                <div>LIGHT: ${data.light_value.toString().padStart(4, ' ')}  STATUS: ${data.status}</div>
+            `;
+
+            // 更新时间
+            updateTime.textContent = `最后更新：${data.timestamp}`;
+        });
+    </script>
+</body>
+</html>
