@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趋势图 - 传感器监控系统</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box
+        }
+        body{
+            font-family:"Microsoft Yahei",sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #e4eaf5);
+            min-height:100vh;
+            color:#333;
+            padding-bottom:50px
+        }
+        .navbar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:20px 40px;
+            background:#ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position:sticky;
+            top:0;
+            z-index:100
+        }
+        .navbar .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a6cf7;
+        }
+        .nav-menu a{
+            color:#666;
+            text-decoration:none;
+            margin:0 20px;
+            padding:10px 15px;
+            border-radius:6px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .nav-menu a.active{
+            background:#4a6cf7;
+            color:#fff;
+        }
+        .nav-menu a:hover {
+            color: #4a6cf7;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            color: #666;
+            font-size: 16px;
+        }
+        .change-pwd-btn {
+            background: #4a6cf7;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius:6px;
+            text-decoration:none;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .change-pwd-btn:hover {
+            background: #3b5bdb;
+        }
+        .logout-btn{
+            background:#ff6b6b;
+            color:#fff;
+            padding:10px 18px;
+            border-radius:6px;
+            text-decoration:none;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #ff5252;
+        }
+        .page-title{
+            text-align:center;
+            margin:40px 0;
+            font-size:36px;
+            color: #333;
+            font-weight: bold;
+        }
+        .volatility-panel{
+            width:95%;
+            max-width: 1400px;
+            margin:30px auto;
+            background:#ffffff;
+            border-radius:16px;
+            padding:30px;
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:space-around;
+            gap:30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+        .volatility-card{
+            background:#f8fafc;
+            border-radius:12px;
+            padding:25px;
+            min-width:260px;
+            color:#333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        .volatility-card h3 {
+            color: #4a6cf7;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .volatility-item{
+            display:flex;
+            justify-content:space-between;
+            margin:15px 0;
+            font-size: 16px;
+        }
+        .volatility-value{
+            font-weight:bold;
+            color:#dc2626;
+            font-size: 18px;
+        }
+        .volatility-time {
+            font-size: 16px;
+            color: #999;
+            margin-top: 15px;
+        }
+        .chart-container{
+            width:95%;
+            max-width: 1400px;
+            margin:40px auto;
+            padding:30px;
+            background:#fff;
+            border-radius:16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+        .chart-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:25px;
+        }
+        .chart-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4a6cf7;
+        }
+        .time-selector {
+            padding: 14px 24px;
+            border: 1px solid #ddd;
+            border-radius:10px;
+            background: #fff;
+            outline: none;
+            font-size: 18px;
+            min-width: 160px;
+            transition: all 0.3s;
+        }
+        .time-selector:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 4px rgba(74, 108, 247, 0.15);
+        }
+        .chart-box{
+            width:100%;
+            height:450px;
+            background:#f8fafc;
+            border-radius: 12px;
+        }
+        .connect-status{
+            width:95%;
+            max-width: 1400px;
+            margin:40px auto;
+            padding:25px;
+            text-align:center;
+            background:#fff;
+            color:#666;
+            border-radius:12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="logo">📊 单片机传感器监控系统</div>
+    <div class="nav-menu">
+        <a href="/index">实时监控</a>
+        <a href="/history_data">历史数据</a>
+        <a href="/trend_chart" class="active">趋势图</a>
+    </div>
+    <div class="user-info">
+        <span>欢迎你，{{ username }}</span>
+        <a href="/change_pwd" class="change-pwd-btn">修改密码</a>
+        <a href="/logout" class="logout-btn">退出</a>
+    </div>
+</nav>
+
+<h1 class="page-title">趋势图 & 波动率</h1>
+
+<div class="volatility-panel">
+    <div class="volatility-card">
+        <h3>🎛️ 可调电阻(ADJ) 波动率</h3>
+        <div class="volatility-item"><span>1分钟：</span><span id="adj-1min">0.00%</span></div>
+        <div class="volatility-item"><span>5分钟：</span><span id="adj-5min">0.00%</span></div>
+        <div class="volatility-item"><span>10分钟：</span><span id="adj-10min">0.00%</span></div>
+        <div class="volatility-time" id="adj-update-time">更新：--</div>
+    </div>
+    <div class="volatility-card">
+        <h3>🌡️ 热敏电阻(NTC) 波动率</h3>
+        <div class="volatility-item"><span>1分钟：</span><span id="ntc-1min">0.00%</span></div>
+        <div class="volatility-item"><span>5分钟：</span><span id="ntc-5min">0.00%</span></div>
+        <div class="volatility-item"><span>10分钟：</span><span id="ntc-10min">0.00%</span></div>
+        <div class="volatility-time" id="ntc-update-time">更新：--</div>
+    </div>
+    <div class="volatility-card">
+        <h3>💡 光敏电阻(LIGHT) 波动率</h3>
+        <div class="volatility-item"><span>1分钟：</span><span id="light-1min">0.00%</span></div>
+        <div class="volatility-item"><span>5分钟：</span><span id="light-5min">0.00%</span></div>
+        <div class="volatility-item"><span>10分钟：</span><span id="light-10min">0.00%</span></div>
+        <div class="volatility-time" id="light-update-time">更新：--</div>
+    </div>
+    <div class="volatility-card">
+        <h3>🌡️ 温度(TEMP) 波动率</h3>
+        <div class="volatility-item"><span>1分钟：</span><span id="temp-1min">0.00%</span></div>
+        <div class="volatility-item"><span>5分钟：</span><span id="temp-5min">0.00%</span></div>
+        <div class="volatility-item"><span>10分钟：</span><span id="temp-10min">0.00%</span></div>
+        <div class="volatility-time" id="temp-update-time">更新：--</div>
+    </div>
+</div>
+
+<div class="chart-container">
+    <div class="chart-header">
+        <div class="chart-title">🔘 可调电阻(ADJ) 趋势</div>
+        <select class="time-selector" onchange="setRange('adj',this.value)">
+            <option value="60000">1分钟</option>
+            <option value="300000" selected>5分钟</option>
+            <option value="600000">10分钟</option>
+        </select>
+    </div>
+    <div id="adj-chart" class="chart-box"></div>
+</div>
+
+<div class="chart-container">
+    <div class="chart-header">
+        <div class="chart-title">🌡️ 热敏电阻(NTC) 趋势</div>
+        <select class="time-selector" onchange="setRange('ntc',this.value)">
+            <option value="60000">1分钟</option>
+            <option value="300000" selected>5分钟</option>
+            <option value="600000">10分钟</option>
+        </select>
+    </div>
+    <div id="ntc-chart" class="chart-box"></div>
+</div>
+
+<div class="chart-container">
+    <div class="chart-header">
+        <div class="chart-title">💡 光敏电阻(LIGHT) 趋势</div>
+        <select class="time-selector" onchange="setRange('light',this.value)">
+            <option value="60000">1分钟</option>
+            <option value="300000" selected>5分钟</option>
+            <option value="600000">10分钟</option>
+        </select>
+    </div>
+    <div id="light-chart" class="chart-box"></div>
+</div>
+
+<div class="chart-container">
+    <div class="chart-header">
+        <div class="chart-title">🌡️ 温度(TEMP) 趋势</div>
+        <select class="time-selector" onchange="setRange('temp',this.value)">
+            <option value="60000">1分钟</option>
+            <option value="300000" selected>5分钟</option>
+            <option value="600000">10分钟</option>
+        </select>
+    </div>
+    <div id="temp-chart" class="chart-box"></div>
+</div>
+
+<div class="connect-status" id="status">🔄 正在连接服务器...</div>
+
+<script>
+let adjChart, ntcChart, lightChart, tempChart;
+let ws = null;
+let dataCache = [];
+const MAX = 600;
+let range = { adj: 300000, ntc: 300000, light: 300000, temp: 300000 };
+let isSimulate = false;
+let mockInterval = null;
+
+// 计算波动率
+function calculateVolatility(dataList, periodMinutes) {
+    if (!dataList || dataList.length === 0) return 0.0;
+    const periodData = dataList.slice(-periodMinutes * 60);
+    if (periodData.length < 2) return 0.0;
+
+    const avg = periodData.reduce((sum, val) => sum + val, 0) / periodData.length;
+    if (avg === 0) return 0.0;
+
+    const variance = periodData.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / periodData.length;
+    const stdDev = Math.sqrt(variance);
+    return parseFloat(((stdDev / avg) * 100).toFixed(2));
+}
+
+// 显示波动率
+function updateVol(data) {
+    if (!data) return;
+
+    document.getElementById('adj-1min').textContent = (data.adj?.["1min"] || 0.00) + '%';
+    document.getElementById('adj-5min').textContent = (data.adj?.["5min"] || 0.00) + '%';
+    document.getElementById('adj-10min').textContent = (data.adj?.["10min"] || 0.00) + '%';
+
+    document.getElementById('ntc-1min').textContent = (data.ntc?.["1min"] || 0.00) + '%';
+    document.getElementById('ntc-5min').textContent = (data.ntc?.["5min"] || 0.00) + '%';
+    document.getElementById('ntc-10min').textContent = (data.ntc?.["10min"] || 0.00) + '%';
+
+    document.getElementById('light-1min').textContent = (data.light?.["1min"] || 0.00) + '%';
+    document.getElementById('light-5min').textContent = (data.light?.["5min"] || 0.00) + '%';
+    document.getElementById('light-10min').textContent = (data.light?.["10min"] || 0.00) + '%';
+
+    document.getElementById('temp-1min').textContent = (data.temp?.["1min"] || 0.00) + '%';
+    document.getElementById('temp-5min').textContent = (data.temp?.["5min"] || 0.00) + '%';
+    document.getElementById('temp-10min').textContent = (data.temp?.["10min"] || 0.00) + '%';
+
+    // 👇 这里强制用最简单的时间格式，必显示
+    let now = new Date();
+    let hh = String(now.getHours()).padStart(2, '0');
+    let mm = String(now.getMinutes()).padStart(2, '0');
+    let ss = String(now.getSeconds()).padStart(2, '0');
+    let t = hh + ":" + mm + ":" + ss;
+
+    // 强制覆盖
+    document.getElementById('adj-update-time').innerText = '更新：' + t;
+    document.getElementById('ntc-update-time').innerText = '更新：' + t;
+    document.getElementById('light-update-time').innerText = '更新：' + t;
+    document.getElementById('temp-update-time').innerText = '更新：' + t;
+}
+
+function initCharts() {
+    const adjEl = document.getElementById('adj-chart');
+    const ntcEl = document.getElementById('ntc-chart');
+    const lightEl = document.getElementById('light-chart');
+    const tempEl = document.getElementById('temp-chart');
+
+    adjChart = echarts.init(adjEl);
+    ntcChart = echarts.init(ntcEl);
+    lightChart = echarts.init(lightEl);
+    tempChart = echarts.init(tempEl);
+
+    const baseOption = {
+    backgroundColor: '#f8fafc',
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'cross' },
+        textStyle: { fontSize: 16 }
+    },
+    grid: { left: '5%', right: '5%', bottom: '8%', top: '8%', containLabel: true },
+    xAxis: {
+        type: 'time',
+        boundaryGap: false,
+        axisLabel: {
+            formatter: (value) => new Date(value).toLocaleTimeString(),
+            fontSize: 14,
+            color: '#666'
+        },
+        axisLine: { lineStyle: { color: '#e2e8f0' } },
+        splitLine: { lineStyle: { color: '#e2e8f0' } },
+        minInterval: 1000
+    },
+    yAxis: {
+        type: 'value',
+        min: 0,
+        max: 255,
+        name: 'AD值',
+        nameTextStyle: { fontSize: 15, color: '#666' },
+        axisLabel: { fontSize: 14, color: '#666' },
+        axisLine: { lineStyle: { color: '#e2e8f0' } },
+        splitLine: { lineStyle: { color: '#e2e8f0' } }
+    },
+    series: [{
+        name: '数据',
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        symbolSize: 6,
+        showSymbol: false,
+        emphasis: {
+            showSymbol: true
+        },
+        data: [],
+        lineStyle: { width: 3 },
+        itemStyle: { color: '#4a6cf7' },
+        areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(74, 108, 247, 0.3)' },
+                { offset: 1, color: 'rgba(74, 108, 247, 0.05)' }
+            ])
+        },
+        sampling: 'lttb'
+    }]
+};
+
+    adjChart.setOption({
+        ...baseOption,
+        series: [{
+            ...baseOption.series[0],
+            lineStyle: { width: 4, color: '#4a6cf7' },
+            itemStyle: { color: '#4a6cf7' }
+        }]
+    });
+
+    ntcChart.setOption({
+        ...baseOption,
+        series: [{
+            ...baseOption.series[0],
+            lineStyle: { width: 4, color: '#ff6b6b' },
+            itemStyle: { color: '#ff6b6b' },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(255,107,107,0.3)' },
+                    { offset: 1, color: 'rgba(255,107,107,0.05)' }
+                ])
+            }
+        }]
+    });
+
+    lightChart.setOption({
+        ...baseOption,
+        series: [{
+            ...baseOption.series[0],
+            lineStyle: { width: 4, color: '#ffb800' },
+            itemStyle: { color: '#ffb800' },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(255,184,0,0.3)' },
+                    { offset: 1, color: 'rgba(255,184,0,0.05)' }
+                ])
+            }
+        }]
+    });
+
+    tempChart.setOption({
+        ...baseOption,
+        yAxis: {
+            ...baseOption.yAxis,
+            min: -10,
+            max: 50,
+            name: '温度 (°C)'
+        },
+        visualMap: {
+            show: false,
+            dimension: 1,
+            pieces: [
+                { lte: 10, color: '#4a6cf7' },
+                { gt: 10, lte: 30, color: '#16a34a' },
+                { gt: 30, color: '#ff6b6b' }
+            ]
+        },
+        series: [{
+            ...baseOption.series[0],
+            lineStyle: { width: 4, color: '#16a34a' },
+            itemStyle: { color: '#16a34a' },
+            markLine: {
+                silent: true,
+                symbol: ['none', 'arrow'],
+                data: [
+                    { yAxis: 35, name: '高温预警线', lineStyle: { color: '#ff6b6b', type: 'dashed', width: 2 } },
+                    { yAxis: 5, name: '低温预警线', lineStyle: { color: '#4a6cf7', type: 'dashed', width: 2 } }
+                ]
+            }
+        }]
+    });
+
+    window.addEventListener('resize', () => {
+        adjChart?.resize();
+        ntcChart?.resize();
+        lightChart?.resize();
+        tempChart?.resize();
+    })
+}
+
+function connectWS() {
+    if (mockInterval) {
+        clearInterval(mockInterval);
+        mockInterval = null;
+    }
+    if (ws) {
+        try { ws.close(); } catch (e) {}
+    }
+
+    document.getElementById('status').textContent = "🔄 正在连接服务器...";
+    document.getElementById('status').style.color = '#666';
+
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = protocol + '//' + location.host + '/ws/sensor';
+
+    try {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            isSimulate = false;
+            document.getElementById('status').textContent = "✅ 已连接到服务器，显示真实数据";
+            document.getElementById('status').style.color = '#16a34a';
+
+            fetch('/api/history')
+                .then(res => {
+                    if (!res.ok) throw new Error('历史数据接口错误');
+                    return res.json();
+                })
+                .then(historyData => {
+                    dataCache = [];
+                    if (historyData && historyData.time && Array.isArray(historyData.time)) {
+                        for (let i = historyData.time.length - 1; i >= 0; i--) {
+                            dataCache.push({
+                                t: historyData.time[i],
+                                adj: historyData.adj[i] || 0,
+                                ntc: historyData.ntc[i] || 0,
+                                light: historyData.light[i] || 0,
+                                temp: historyData.temp[i] || 0
+                            });
+                        }
+                    }
+                    refreshAll();
+                    updateVolFromCache();
+                })
+                .catch(err => {
+                    console.log('加载历史数据失败:', err);
+                    if (!isSimulate) startMockData();
+                });
+        };
+
+        ws.onmessage = (e) => {
+            try {
+                const d = JSON.parse(e.data);
+                const now = Date.now();
+                if (typeof d.adj !== 'undefined') {
+                    dataCache.push({
+                        t: now,
+                        adj: d.adj || 0,
+                        ntc: d.ntc || 0,
+                        light: d.light || 0,
+                        temp: d.temp || 0
+                    });
+                    if (dataCache.length > MAX) dataCache.shift();
+                    refreshAll();
+                    updateVolFromCache();
+                }
+            } catch (err) {
+                console.log('解析实时数据失败:', err);
+            }
+        };
+
+        ws.onclose = () => {
+            if (!isSimulate) {
+                isSimulate = true;
+                document.getElementById('status').textContent = "⚠️ 服务器连接断开，5秒后重试（当前显示模拟数据）";
+                document.getElementById('status').style.color = '#ffb800';
+                startMockData();
+                setTimeout(connectWS, 5000);
+            }
+        };
+
+        ws.onerror = (err) => {
+            console.log('WebSocket错误:', err);
+            try { ws.close(); } catch (e) {}
+            if (!isSimulate) {
+                isSimulate = true;
+                document.getElementById('status').textContent = "❌ WebSocket连接错误，显示模拟数据";
+                document.getElementById('status').style.color = '#dc2626';
+                startMockData();
+            }
+        };
+    } catch (e) {
+        console.log('创建WebSocket失败:', e);
+        isSimulate = true;
+        document.getElementById('status').textContent = "❌ 无法创建WebSocket连接，显示模拟数据";
+        document.getElementById('status').style.color = '#dc2626';
+        startMockData();
+    }
+}
+
+function startMockData() {
+    if (mockInterval) clearInterval(mockInterval);
+    isSimulate = true;
+    const now = Date.now();
+    dataCache = [];
+
+    for (let i = 300; i >= 0; i--) {
+        const time = now - (i * 1000);
+        dataCache.push({
+            t: time,
+            adj: Math.floor(Math.random() * 50) + 100 - (i % 20),
+            ntc: Math.floor(Math.random() * 80) + 50 + (i % 15),
+            light: Math.floor(Math.random() * 100) + 20 - (i % 25),
+            temp: parseFloat((Math.random() * 10 + 20 + (i % 5)/10).toFixed(1))
+        });
+    }
+
+    refreshAll();
+    updateVolFromCache();
+
+    mockInterval = setInterval(() => {
+        if (!isSimulate) {
+            clearInterval(mockInterval);
+            mockInterval = null;
+            return;
+        }
+        const mockData = {
+            adj: Math.floor(Math.random() * 50) + 100,
+            ntc: Math.floor(Math.random() * 80) + 50,
+            light: Math.floor(Math.random() * 100) + 20,
+            temp: parseFloat((Math.random() * 10 + 20).toFixed(1))
+        };
+        const now = Date.now();
+        dataCache.push({ t: now, ...mockData });
+        if (dataCache.length > MAX) dataCache.shift();
+        refreshAll();
+        updateVolFromCache();
+    }, 1000);
+}
+
+function updateVolFromCache() {
+    const adj = dataCache.map(i => i.adj);
+    const ntc = dataCache.map(i => i.ntc);
+    const light = dataCache.map(i => i.light);
+    const temp = dataCache.map(i => i.temp);
+
+    updateVol({
+        adj: {
+            "1min": calculateVolatility(adj, 1),
+            "5min": calculateVolatility(adj, 5),
+            "10min": calculateVolatility(adj, 10)
+        },
+        ntc: {
+            "1min": calculateVolatility(ntc, 1),
+            "5min": calculateVolatility(ntc, 5),
+            "10min": calculateVolatility(ntc, 10)
+        },
+        light: {
+            "1min": calculateVolatility(light, 1),
+            "5min": calculateVolatility(light, 5),
+            "10min": calculateVolatility(light, 10)
+        },
+        temp: {
+            "1min": calculateVolatility(temp, 1),
+            "5min": calculateVolatility(temp, 5),
+            "10min": calculateVolatility(temp, 10)
+        }
+    });
+}
+
+function refreshAll() {
+    refresh('adj');
+    refresh('ntc');
+    refresh('light');
+    refresh('temp');
+}
+
+function refresh(type) {
+    const now = Date.now();
+    const r = range[type] || 300000;
+    const list = dataCache.filter(i => i.t >= now - r).map(i => [i.t, i[type]]);
+
+    if (type === 'adj') adjChart.setOption({ series: [{ data: list }] });
+    if (type === 'ntc') ntcChart.setOption({ series: [{ data: list }] });
+    if (type === 'light') lightChart.setOption({ series: [{ data: list }] });
+    if (type === 'temp') tempChart.setOption({ series: [{ data: list }] });
+}
+
+function setRange(type, val) {
+    range[type] = parseInt(val);
+    refresh(type);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    setTimeout(connectWS, 100);
+    const t = new Date().toLocaleTimeString([], { hour12: false, fractionalSecondDigits: 3 });
+    document.getElementById('adj-update-time').textContent = '更新：' + t;
+    document.getElementById('ntc-update-time').textContent = '更新：' + t;
+    document.getElementById('light-update-time').textContent = '更新：' + t;
+    document.getElementById('temp-update-time').textContent = '更新：' + t;
+});
+
+window.addEventListener('beforeunload', () => {
+    if (mockInterval) clearInterval(mockInterval);
+    if (ws) try { ws.close(); } catch (e) {}
+});
+</script>
+</body>
+</html>

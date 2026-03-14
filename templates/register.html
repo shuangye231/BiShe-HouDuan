@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 单片机传感器实时监控系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", "微软雅黑", sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 550px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 50px 60px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .form-title {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 40px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .form-title::before {
+            content: "📝";
+            font-size: 30px;
+        }
+        .error-msg {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+            outline: none;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #2a5298;
+            box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.12);
+        }
+        .captcha-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .captcha-box input {
+            flex: 1;
+        }
+        .captcha-box img {
+            height: 52px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
+        .form-btn {
+            width: 100%;
+            padding: 16px;
+            background: #2a5298;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 15px;
+        }
+        .form-btn:hover {
+            background: #1e3c72;
+        }
+        .form-tip {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 16px;
+            color: #666;
+        }
+        .form-tip a {
+            color: #2a5298;
+            text-decoration: none;
+        }
+        .form-tip a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2 class="form-title">用户注册</h2>
+        {% if msg %}
+        <div class="error-msg">{{ msg }}</div>
+        {% endif %}
+        <form method="post" action="/register">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" name="username" required placeholder="请输入3-20位用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" name="password" required placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label>确认密码</label>
+                <input type="password" name="confirm_pwd" required placeholder="请再次输入密码">
+            </div>
+            <div class="form-group">
+                <label>验证码</label>
+                <div class="captcha-box">
+                    <input type="text" name="captcha" required placeholder="请输入4位验证码">
+                    <img src="/captcha" id="captcha-img" title="点击刷新验证码" onclick="this.src='/captcha?'+Math.random()">
+                </div>
+            </div>
+            <button type="submit" class="form-btn">注册</button>
+        </form>
+        <div class="form-tip">
+            已有账号？<a href="/login">立即登录</a>
+        </div>
+    </div>
+</body>
+</html>

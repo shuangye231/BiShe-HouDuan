@@ -3,300 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>单片机传感器实时监控系统</title>
+    <title>实时监控 - 单片机传感器监控系统</title>
     <style>
-        /* 全局样式 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft YaHei", Arial, sans-serif;
         }
-
         body {
-            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            font-family: "Microsoft Yahei", "微软雅黑", sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #e4eaf5);
             min-height: 100vh;
-            padding: 20px;
-            color: white;
+            color: #333;
+            padding-bottom: 50px;
         }
-
-        /* 标题样式 */
-        .page-title {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 32px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            letter-spacing: 2px;
+        /* 导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-
-        /* 传感器卡片容器 */
-        .sensor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
-            margin: 0 auto 30px;
+        .navbar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4a6cf7;
         }
-
-        /* 卡片样式 */
-        .sensor-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+        .nav-menu a {
+            color: #666;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s;
         }
-
-        .sensor-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        .nav-menu a.active {
+            background: #4a6cf7;
+            color: #fff;
         }
-
-        .card-header {
+        .nav-menu a:hover {
+            color: #4a6cf7;
+        }
+        .user-info {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            gap: 15px;
+            color: #666;
+        }
+        .change-pwd-btn {
+            background: #4a6cf7;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .change-pwd-btn:hover {
+            background: #3b5bdb;
+        }
+        .logout-btn {
+            background: #ff6b6b;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #ff5252;
         }
 
-        .card-icon {
-            font-size: 24px;
-        }
-
-        .card-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        /* 数值显示 */
-        .sensor-value {
-            font-size: 48px;
-            font-weight: bold;
+        .page-title {
             text-align: center;
-            margin: 15px 0;
-            color: #ffdd59;
-        }
-
-        .sensor-unit {
-            text-align: center;
-            font-size: 14px;
-            color: #e0e0e0;
-            margin-bottom: 15px;
-        }
-
-        /* 光敏状态标签 */
-        .status-tag {
-            display: block;
-            width: fit-content;
-            margin: 0 auto;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .status-dark {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .status-normal {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .status-bright {
-            background-color: #ffc107;
+            margin: 30px 0;
+            font-size: 32px;
             color: #333;
         }
 
-        /* 连接状态 */
-        .status-bar {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 15px;
+        /* LCD模拟 */
+        .lcd-box {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background: #000;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
             text-align: center;
+            font-family: "Courier New", monospace;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .lcd-title {
+            color: #ccc;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .lcd-content {
+            color: #39ff14;
+            font-size: 24px;
+            line-height: 1.8;
+            min-height: 80px;
+        }
+        .lcd-time {
+            color: #999;
+            margin-top: 15px;
             font-size: 16px;
         }
 
-        .connected {
-            color: #28a745;
+        /* 数据卡片 */
+        .data-card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 95%;
+            margin: 40px auto;
         }
-
-        .disconnected {
-            color: #dc3545;
-        }
-
-        /* 最后更新时间 */
-        .update-time {
+        .data-card {
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
+            padding: 30px 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             text-align: center;
+            transition: all 0.3s;
+        }
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        .card-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #4a6cf7;
+        }
+        .card-value {
+            font-size: 60px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #333;
+        }
+        .card-unit {
+            color: #999;
+            font-size: 16px;
+        }
+
+        /* 状态标签 */
+        .status-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
             margin-top: 15px;
-            font-size: 14px;
-            color: #cccccc;
+        }
+        .status-tag.dark {
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        .status-tag.light {
+            background: #fff9e6;
+            color: #ffb800;
+            border: 1px solid #ffcc80;
         }
 
-        /* LCD模拟显示 */
-        .lcd-simulator {
-            max-width: 1000px;
-            margin: 30px auto;
-            background: #002b00;
-            padding: 25px;
-            border-radius: 15px;
-            border: 5px solid #333;
-            font-family: "Courier New", monospace;
-        }
-
-        .lcd-title {
-            text-align: center;
-            margin-bottom: 10px;
+        /* 温度标签 */
+        .temp-tag {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
             font-size: 18px;
-            color: #00ff00;
+            margin-top: 15px;
+            border: 1px solid #4ade80;
+            background: #ecfdf5;
+            color: #16a34a;
         }
 
-        .lcd-content {
-            font-size: 22px;
-            color: #00ff00;
-            line-height: 1.8;
-            letter-spacing: 2px;
+        /* 连接状态 */
+        .connect-status {
+            width: 90%;
+            margin: 30px auto;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #ffffff;
+            font-size: 16px;
+            color: #666;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         /* 响应式适配 */
         @media (max-width: 768px) {
-            .page-title {
-                font-size: 24px;
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
             }
-            .sensor-value {
-                font-size: 36px;
+            .nav-menu {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            .page-title {
+                font-size: 26px;
+            }
+            .lcd-content {
+                font-size: 20px;
+            }
+            .card-value {
+                font-size: 48px;
             }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
-    <h1 class="page-title">📊 单片机传感器实时监控系统</h1>
+    <nav class="navbar">
+        <div class="logo">📊 单片机传感器监控系统</div>
+        <div class="nav-menu">
+            <a href="/index" class="active">实时监控</a>
+            <a href="/history_data">历史数据</a>
+            <a href="/trend_chart">趋势图</a>
+        </div>
+        <div class="user-info">
+            <span>欢迎你，{{ username }}</span>
+            <a href="/change_pwd" class="change-pwd-btn">修改密码</a>
+            <a href="/logout" class="logout-btn">退出</a>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <h1 class="page-title">实时监控面板</h1>
 
     <!-- LCD模拟显示 -->
-    <div class="lcd-simulator">
+    <div class="lcd-box">
         <div class="lcd-title">LCD1602 模拟显示</div>
         <div class="lcd-content" id="lcd-content">
-            <div>ADJ: ----  NTC: ----</div>
-            <div>LIGHT: ----  STATUS: --</div>
+            ADJ: 0 NTC: 0<br>
+            LIGHT: 0 STATUS: Dark TEMP: --.-°C
         </div>
-        <div class="update-time" id="update-time">最后更新：--:--:--</div>
+        <div class="lcd-time" id="update-time">最后更新: --:--:--.---</div>
     </div>
 
-    <!-- 传感器卡片 -->
-    <div class="sensor-grid">
-        <!-- 可调电阻 -->
-        <div class="sensor-card">
-            <div class="card-header">
-                <span class="card-icon">🎛️</span>
-                <h2 class="card-title">可调电阻 (ADJ)</h2>
+    <!-- 数据卡片 -->
+    <div class="data-card-container">
+        <div class="data-card">
+            <div class="card-title">
+                <span>🎛️</span> 可调电阻 (ADJ)
             </div>
-            <div class="sensor-value" id="adj-value">0</div>
-            <div class="sensor-unit">8位AD值 (0-255)</div>
+            <div class="card-value" id="adj-value">0</div>
+            <div class="card-unit">8位AD值 (0-255)</div>
         </div>
 
-        <!-- 热敏电阻 -->
-        <div class="sensor-card">
-            <div class="card-header">
-                <span class="card-icon">🌡️</span>
-                <h2 class="card-title">热敏电阻 (NTC)</h2>
+        <div class="data-card">
+            <div class="card-title">
+                <span>🌡️</span> 热敏电阻 (NTC)
             </div>
-            <div class="sensor-value" id="ntc-value">0</div>
-            <div class="sensor-unit">8位AD值 (0-255)</div>
+            <div class="card-value" id="ntc-value">0</div>
+            <div class="card-unit">8位AD值 (0-255)</div>
+            <div class="temp-tag" id="temp-tag">--.-°C</div>
         </div>
 
-        <!-- 光敏电阻 -->
-        <div class="sensor-card">
-            <div class="card-header">
-                <span class="card-icon">💡</span>
-                <h2 class="card-title">光敏电阻 (LIGHT)</h2>
+        <div class="data-card">
+            <div class="card-title">
+                <span>💡</span> 光敏电阻 (LIGHT)
             </div>
-            <div class="sensor-value" id="light-value">0</div>
-            <div class="sensor-unit">8位AD值 (0-255)</div>
-            <span class="status-tag" id="light-status">等待数据</span>
+            <div class="card-value" id="light-value">0</div>
+            <div class="card-unit">8位AD值 (0-255)</div>
+            <div class="status-tag dark" id="status-tag">Dark</div>
         </div>
     </div>
 
     <!-- 连接状态 -->
-    <div class="status-bar" id="connection-status">
-        🔄 正在连接到服务器...
+    <div class="connect-status" id="connect-status">
+        🔌 正在连接服务器...
     </div>
 
     <script>
-        // DOM元素
-        const adjValue = document.getElementById('adj-value');
-        const ntcValue = document.getElementById('ntc-value');
-        const lightValue = document.getElementById('light-value');
-        const lightStatus = document.getElementById('light-status');
-        const lcdContent = document.getElementById('lcd-content');
-        const updateTime = document.getElementById('update-time');
-        const connectionStatus = document.getElementById('connection-status');
-
-        // 连接SocketIO
-        const socket = io({
-            reconnection: true,
-            reconnectionAttempts: 10,
-            reconnectionDelay: 1000
-        });
-
-        // 连接成功
-        socket.on('connect', () => {
-            connectionStatus.className = 'status-bar connected';
-            connectionStatus.textContent = '✅ 已连接到服务器，实时接收数据';
-        });
-
-        // 连接断开
-        socket.on('disconnect', () => {
-            connectionStatus.className = 'status-bar disconnected';
-            connectionStatus.textContent = '❌ 与服务器断开连接，请刷新页面';
-        });
-
-        // 接收传感器数据
-        socket.on('sensor_update', (data) => {
-            console.log('收到数据：', data);
-
-            // 更新数值
-            adjValue.textContent = data.adj_value;
-            ntcValue.textContent = data.ntc_value;
-            lightValue.textContent = data.light_value;
-
-            // 更新光敏状态
-            lightStatus.textContent = data.status;
-            lightStatus.className = 'status-tag';
-            switch (data.status.toLowerCase()) {
-                case 'dark':
-                    lightStatus.classList.add('status-dark');
-                    break;
-                case 'normal':
-                    lightStatus.classList.add('status-normal');
-                    break;
-                case 'bright':
-                    lightStatus.classList.add('status-bright');
-                    break;
-                default:
-                    lightStatus.style.background = '#dc3545';
-                    lightStatus.style.color = 'white';
-            }
-
-            // 更新LCD模拟显示
-            lcdContent.innerHTML = `
-                <div>ADJ: ${data.adj_value.toString().padStart(4, ' ')}  NTC: ${data.ntc_value.toString().padStart(4, ' ')}</div>
-                <div>LIGHT: ${data.light_value.toString().padStart(4, ' ')}  STATUS: ${data.status}</div>
+        // 更新页面数据
+        function updatePageData(data) {
+            document.getElementById('lcd-content').innerHTML = `
+                ADJ: ${data.adj} NTC: ${data.ntc}<br>
+                LIGHT: ${data.light} STATUS: ${data.status} TEMP: ${data.temp.toFixed(1)}°C
             `;
+            document.getElementById('adj-value').innerText = data.adj;
+            document.getElementById('ntc-value').innerText = data.ntc;
+            document.getElementById('light-value').innerText = data.light;
 
-            // 更新时间
-            updateTime.textContent = `最后更新：${data.timestamp}`;
-        });
+            const statusTag = document.getElementById('status-tag');
+            statusTag.innerText = data.status;
+            statusTag.className = data.status === 'Dark' ? 'status-tag dark' : 'status-tag light';
+
+            const tempTag = document.getElementById('temp-tag');
+            tempTag.innerText = `${data.temp.toFixed(1)}°C`;
+            if (data.temp >= 30) {
+                tempTag.style.background = '#fef2f2';
+                tempTag.style.color = '#dc2626';
+                tempTag.style.borderColor = '#fca5a5';
+            } else if (data.temp <= 10) {
+                tempTag.style.background = '#eff6ff';
+                tempTag.style.color = '#2563eb';
+                tempTag.style.borderColor = '#93c5fd';
+            } else {
+                tempTag.style.background = '#ecfdf5';
+                tempTag.style.color = '#16a34a';
+                tempTag.style.borderColor = '#4ade80';
+            }
+            document.getElementById('update-time').innerText = `最后更新: ${data.update_time}`;
+        }
+
+        function initWebSocket() {
+            if (window.ws) try { window.ws.close(); } catch (e) {}
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host || '127.0.0.1:5000';
+            const wsUrl = `${protocol}//${host}/ws/sensor`;
+            const ws = new WebSocket(wsUrl);
+            window.ws = ws;
+
+            ws.onopen = function() {
+                document.getElementById('connect-status').innerHTML = '✅ 已连接到服务器，实时接收数据';
+                document.getElementById('connect-status').style.color = '#16a34a';
+                document.getElementById('connect-status').style.borderColor = '#4ade80';
+                fetch('/api/realtime')
+                    .then(res => res.json())
+                    .then(data => updatePageData(data))
+                    .catch(err => console.error('获取初始数据失败:', err));
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    updatePageData(data);
+                } catch (e) {
+                    console.error('数据解析失败:', e);
+                }
+            };
+
+            ws.onclose = function() {
+                document.getElementById('connect-status').innerHTML = '❌ 连接断开，5秒后重连...';
+                document.getElementById('connect-status').style.color = '#dc2626';
+                document.getElementById('connect-status').style.borderColor = '#fca5a5';
+                setTimeout(initWebSocket, 5000);
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+            };
+        }
+
+        window.onload = function() {
+            initWebSocket();
+            setInterval(() => {
+                if (!window.ws || window.ws.readyState !== WebSocket.OPEN) {
+                    fetch('/api/realtime')
+                        .then(res => res.json())
+                        .then(data => updatePageData(data))
+                        .catch(err => console.warn('拉取数据失败:', err));
+                }
+            }, 1000);
+        };
     </script>
 </body>
 </html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史数据 - 单片机传感器监控系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Microsoft Yahei", "微软雅黑", sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #e4eaf5);
+            min-height: 100vh;
+            color: #333;
+            padding-bottom: 50px;
+        }
+        /* 导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4a6cf7;
+        }
+        .nav-menu a {
+            color: #666;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .nav-menu a.active {
+            background: #4a6cf7;
+            color: #fff;
+        }
+        .nav-menu a:hover {
+            color: #4a6cf7;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #666;
+        }
+        .change-pwd-btn {
+            background: #4a6cf7;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .change-pwd-btn:hover {
+            background: #3b5bdb;
+        }
+        .logout-btn {
+            background: #ff6b6b;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #ff5252;
+        }
+
+        .page-title {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 32px;
+            color: #333;
+        }
+
+        /* 数据控制区 */
+        .data-control {
+            width: 90%;
+            margin: 20px auto;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+        .data-control label {
+            font-size: 18px;
+            color: #666;
+        }
+        .data-control select {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            outline: none;
+            font-size: 16px;
+            background: #fff;
+            min-width: 120px;
+            transition: all 0.3s;
+        }
+        .data-control select:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+        }
+
+        /* 数据表格（表头与数据对齐） */
+        .data-table-container {
+            width: 95%;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #333;
+        }
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            font-size: 16px;
+            color: #4a6cf7;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: #f8fafc;
+        }
+        .status-dark {
+            color: #666;
+            font-weight: bold;
+        }
+        .status-light {
+            color: #ffb800;
+            font-weight: bold;
+        }
+
+        /* 空数据提示 */
+        .empty-data {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 18px;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            .nav-menu {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            .page-title {
+                font-size: 26px;
+            }
+            .data-table-container {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 10px;
+            }
+            .data-control {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">📊 单片机传感器监控系统</div>
+        <div class="nav-menu">
+            <a href="/index">实时监控</a>
+            <a href="/history_data" class="active">历史数据</a>
+            <a href="/trend_chart">趋势图</a>
+        </div>
+        <div class="user-info">
+            <span>欢迎你，{{ username }}</span>
+            <a href="/change_pwd" class="change-pwd-btn">修改密码</a>
+            <a href="/logout" class="logout-btn">退出</a>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <h1 class="page-title">传感器历史数据</h1>
+
+    <!-- 数据控制区 -->
+    <div class="data-control">
+        <label for="data-limit">显示条数：</label>
+        <select id="data-limit" onchange="changeDataLimit()">
+            <option value="20" {% if current_limit == 20 %}selected{% endif %}>20条</option>
+            <option value="50" {% if current_limit == 50 %}selected{% endif %}>50条</option>
+            <option value="100" {% if current_limit == 100 %}selected{% endif %}>100条</option>
+        </select>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="data-table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>时间（精确到毫秒）</th>
+                    <th>可调电阻(ADJ)</th>
+                    <th>热敏电阻(NTC)</th>
+                    <th>光敏电阻(LIGHT)</th>
+                    <th>亮度状态</th>
+                    <th>温度(°C)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if data_list %}
+                    {% for item in data_list %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ item.time }}</td>
+                        <td>{{ item.adj }}</td>
+                        <td>{{ item.ntc }}</td>
+                        <td>{{ item.light }}</td>
+                        <td class="{{ 'status-dark' if item.status == 'Dark' else 'status-light' }}">
+                            {{ item.status }}
+                        </td>
+                        <td>{{ item.temp }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="empty-data">暂无历史数据</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function changeDataLimit() {
+            const select = document.getElementById('data-limit');
+            const limit = select.value;
+            loadHistoryData(limit);
+            window.history.pushState({}, '', `/history_data?limit=${limit}`);
+        }
+
+        function loadHistoryData(limit) {
+            fetch(`/history_data?limit=${limit}&ajax=1`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('table tbody');
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="empty-data">暂无历史数据</td></tr>';
+                        return;
+                    }
+                    let html = '';
+                    data.forEach((item, index) => {
+                        html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.time}</td>
+                            <td>${item.adj}</td>
+                            <td>${item.ntc}</td>
+                            <td>${item.light}</td>
+                            <td class="${item.status === 'Dark' ? 'status-dark' : 'status-light'}">
+                                ${item.status}
+                            </td>
+                            <td>${item.temp}</td>
+                        </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                })
+                .catch(err => console.log('加载数据失败:', err));
+        }
+
+        setInterval(() => {
+            const select = document.getElementById('data-limit');
+            const currentLimit = select.value;
+            loadHistoryData(currentLimit);
+        }, 5000);
+
+        window.onload = () => {
+            const select = document.getElementById('data-limit');
+            loadHistoryData(select.value);
+        };
+    </script>
+</body>
+</html>
